@@ -51,6 +51,8 @@ const typeDefs = `#graphql
         id: ID!
         user: User!
         items: [CartItem!]!
+        totalItems: Int!
+        subtotal: Float!
     }
 
     input AddToCartInput {
@@ -62,6 +64,21 @@ const typeDefs = `#graphql
         productId: ID!
         quantity: Int!
     }
+
+    type OrderItem {
+        product: Product!
+        quantity: Int!
+        price: Float!
+    }
+
+    type Order {
+        id: ID!
+        user: User!
+        items: [OrderItem!]!
+        totalAmount: Float!
+        status: String!
+        createdAt: String!
+    }
         
     type Query {
         products: [Product!]!
@@ -70,6 +87,8 @@ const typeDefs = `#graphql
         user(id: ID!): User
         currentUser: User
         myCart: Cart
+        orders: [Order!]!
+        order(id: ID!): Order
     }
 
     type Mutation {
@@ -88,6 +107,8 @@ const typeDefs = `#graphql
         updateCartItem(input: UpdateCartItemInput!): Cart!
         removeFromCart(productId: ID!): Cart!
         clearCart: Cart!
+
+        createOrder: Order!
     }
 `;
 

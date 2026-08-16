@@ -1,5 +1,6 @@
 import Cart from "../models/cart.js";
 import Product from "../models/products.js";
+import { getUserCart } from "../utils/cartHelper.js";
 
 export const addProductToCart = async (user, input) => {
   if (!user) {
@@ -67,7 +68,7 @@ export const updateCartItem = async (user, input) => {
     throw new Error("Quantity must be greater than 0");
   }
 
-  const cart = getUserCart(user);
+  const cart = await getUserCart(user);
 
   if (!cart) {
     throw new Error("Cart not found");
@@ -100,7 +101,7 @@ export const updateCartItem = async (user, input) => {
 };
 
 export const removeCartItem = async (user, productId) => {
-  const cart = getUserCart(user);
+  const cart = await getUserCart(user);
 
   if (!cart) {
     throw new Error("Cart not found");
@@ -125,7 +126,7 @@ export const removeCartItem = async (user, productId) => {
 };
 
 export const clearUserCart = async (user) => {
-  const cart = getUserCart(user);
+  const cart = await getUserCart(user);
 
   if (!cart) {
     throw new Error("Cart not found");

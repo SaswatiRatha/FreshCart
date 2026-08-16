@@ -41,9 +41,9 @@ const startServer = async () => {
         context: async ({ req, res }) => {
           const user = await getAuthenticatedUser(req);
           return {
-            user,
             req,
             res,
+            user,
           };
         },
       }),

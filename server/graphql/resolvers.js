@@ -10,6 +10,17 @@ import {
   removeCartItem,
   updateCartItem,
 } from "../services/cartService.js";
+import {
+  loginUserInput,
+  logout,
+  registerUserInput,
+} from "../services/userService.js";
+import { create, deleteProduct, update } from "../services/productService.js";
+import {
+  createOrderFunction,
+  orderFunction,
+  ordersFunction,
+} from "../services/orderService.js";
 
 const resolvers = {
   Query: {
@@ -40,79 +51,38 @@ const resolvers = {
       const cart = await getUserCart(user);
       return getPopulatedCart(cart);
     },
+
+    orders: async (_, __, { user }) => {
+      return ordersFunction(user);
+    },
+
+    order: async (_, { id }, { user }) => {
+      return orderFunction(id, user);
+    },
   },
   Mutation: {
-    createProduct: async (_, { input }) => {
-      const product = await Product.create(input);
-      return product;
+    createProduct: async (_, { input }, { user }) => {
+      return create(input, user);
     },
 
-    updateProduct: async (_, { id, input }) => {
-      const product = await Product.findByIdAndUpdate(id, input, {
-        new: true,
-        runValidators: true,
-      });
-      if (!product) {
-        throw new Error("Product not found");
-      }
-      return product;
+    updateProduct: async (_, { id, input }, { user }) => {
+      return update(id, input, user);
     },
 
-    deleteProduct: async (_, { id }) => {
-      const product = await Product.findByIdAndDelete(id);
-      if (!product) {
-        throw new Error("Product not found");
-      }
-      return product;
+    deleteProduct: async (_, { id }, { user }) => {
+      return deleteProduct(id, user);
     },
 
     registerUser: async (_, { input }) => {
-      const { name, password } = input;
-      const email = input.email.toLowerCase().trim();
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        throw new Error("User already exists. Please login!");
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const user = await User.create({
-        name,
-        email,
-        password: hashedPassword,
-      });
-
-      return user;
+      return registerUserInput(input);
     },
 
     loginUser: async (_, { input }, { res }) => {
-      const { password } = input;
-      const email = input.email.toLowerCase().trim();
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        throw new Error("Invalid email or password!");
-      }
-
-      const isPasswordValid = await user.validatePassword(password);
-
-      if (!isPasswordValid) {
-        throw new Error("Invalid email or password!");
-      }
-
-      const token = await user.getJWT();
-      res.cookie("token", token, {
-        httpOnly: true,
-        sameSite: "lax",
-      });
-      return user;
+      return loginUserInput(input, res);
     },
 
     logoutUser: async (_, __, { res }) => {
-      res.clearCookie("token", {
-        httpOnly: true,
-        sameSite: "lax",
-      });
-      return true;
+      return logout(res);
     },
 
     addToCart: async (_, { input }, { user }) => {
@@ -120,15 +90,41 @@ const resolvers = {
     },
 
     updateCartItem: async (_, { input }, { user }) => {
-      updateCartItem(user, input);
+      return updateCartItem(user, input);
     },
 
     removeFromCart: async (_, { productId }, { user }) => {
-      removeCartItem(user, productId);
+      return removeCartItem(user, productId);
     },
 
     clearCart: async (_, __, { user }) => {
-      clearUserCart(user);
+      return clearUserCart(user);
+    },
+
+    createOrder: async (_, __, { user }) => {
+      return createOrderFunction(user);
+    },
+  },
+
+  User: {
+    id: (user) => user._id.toString(),
+  },
+
+  Cart: {
+    totalItems: (cart) => {
+      return cart.items.reduce((total, item) => total + item.quantity, 0);
+    },
+    subtotal: (cart) => {
+      return cart.items.reduce(
+        (total, item) => total + item.product.price * item.quantity,
+        0,
+      );
+    },
+  },
+
+  Order: {
+    createdAt: (order) => {
+      return new Date(order.createdAt).toISOString();
     },
   },
 };
